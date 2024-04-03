@@ -1,0 +1,69 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+
+using namespace std;
+
+const int N = 6;	//不为5 是为了吸收空字符
+char g[N][N], backup[N][N];		//backup用于备份  每次对一行操作后需要回复原状态
+int dx[] = { -1,0,0,1,0 }, dy[] = { 0,-1,1,0,0 };
+
+void turn(int x, int y) {		//x表示纵坐标   y表示横坐标
+	int a, b;
+	for (int i = 0; i < 5; i++) {
+		a = x + dx[i];
+		b = y + dy[i];
+		if (a < 0 || a >= 5 || b < 0 || b >= 5) continue; //如果新的坐标位置不在方形内重新开始
+		g[a][b] ^= 1;
+	}
+}
+
+int main() {
+	int n = 0;
+	cin >> n;
+	    //记录最小的步数  选择一个大于12的数
+	while (n--) {
+		for (int i = 0; i < 5; i++) {
+			cin>> g[i];        //读取25个灯的状态
+		}
+		int reset = 12; 
+	//枚举第一行进行操作
+		//5列 每一列有2种状态   0表示未操作 1表示操作了 共有[1<<25]个操作可能  即32种操作方法  
+		//将每种可能用二进制表示    eg：00000表示未对第一行操作     11001表示改变了第一行的第1、2、5列灯的状态，其余不操作
+		for (int op = 0; op < 32; op++) {
+			//根据二进制表达式  改变所在列为1的灯及周为灯的状态
+			int step = 0;  //记录每种可能的完成步数
+			memcpy(backup, g, sizeof(g));    //备份25个灯笼的初始状态
+			for (int i = 0; i < 5; i++) {
+				//利用&判断1
+				if (op >> i & 1) {     //***功能：判断第5-i列    是否为1    若是则执行
+					step++;
+					turn(0, 4 - i);   
+				}
+			}
+			//对根据第i行j列的灯灭情况，改变第i+1行j列
+			for (int i = 0; i < 4; i++) {
+				for (int j = 0; j < 5; j++) {
+					if (g[i][j] == '0') {
+						step++;
+						turn(i + 1, j);
+					}
+				}
+			}
+			//确定最后一行有灯灭  若有则说明方案不可行
+			bool dark = false;
+			for (int j = 0; j < 5; j++) {
+				if (g[4][j] == '0') {
+					dark = true;
+					break;
+				}
+			}
+			if (!dark) reset = min(reset, step);
+			memcpy(g, backup, sizeof(backup));  //恢复灯笼的初始状态
+		}
+	//输出
+		if (reset > 6)cout << -1 << endl;
+		else cout << reset << endl;
+	}
+
+}
